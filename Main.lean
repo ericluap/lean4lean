@@ -26,10 +26,10 @@ You can also use `lake exe lean4lean --fresh Mathlib.Data.Nat.Basic` to replay a
 -/
 unsafe def runRunCmd (p : Parsed) : IO UInt32 := do
   initSearchPath (← findSysroot)
-  -- let onlyConsts? := p.flag? "only" |>.map fun onlys => 
+  -- let onlyConsts? := p.flag? "only" |>.map fun onlys =>
   --   onlys.as! (Array String)
   let fresh : Bool := p.hasFlag "fresh"
-  let searchPath? := p.flag? "search-path" |>.map fun sp => 
+  let searchPath? := p.flag? "search-path" |>.map fun sp =>
     sp.as! String
   match searchPath? with
   | .some sp =>
@@ -38,7 +38,10 @@ unsafe def runRunCmd (p : Parsed) : IO UInt32 := do
   | _ => initSearchPath (← findSysroot)
   let proofIrrelevance := not $ p.hasFlag "no-proof-irrel"
   let kLikeReduction := not $ p.hasFlag "no-klike-red"
-  let opts := {proofIrrelevance, kLikeReduction}
+  let iotaReduction : NameSet := (p.flag? "no-iota" |>.map fun typeStr =>
+    let recName := Lean.mkRecName (typeStr.as! String |>.toName)
+    {recName}).getD {}
+  let opts := {proofIrrelevance, kLikeReduction, iotaReduction}
   match p.positionalArg? "input" with
     | .some mod => match mod.value.toName with
       | .anonymous => throw <| IO.userError s!"Could not resolve module: {mod}"
@@ -91,6 +94,7 @@ unsafe def runCmd : Cmd := `[Cli|
     s, "search-path" : String;      "Set search path directory"
     npi, "no-proof-irrel";          "Disable proof irrelevance"
     nklr, "no-klike-red";           "Disable k-like reduction"
+    niota, "no-iota" : String;      "Disable iota reduction for the given type"
     -- o, only : Array String; "Only translate the specified constants and their dependencies."
 
   ARGS:

@@ -67,9 +67,17 @@ def getRecRuleFor (rval : RecursorVal) (major : Expr) : Option RecursorRule := d
 
 set_option linter.unusedVariables false in
 def inductiveReduceRec [Monad m] (env : Kernel.Environment) (e : Expr)
-    (whnf : Nat → Expr → m Expr) (trace : String → m Unit) (inferType : Expr → m Expr) (inferType' : Expr → m Expr) (isDefEq : Expr → Expr → m Bool) (kLikeReduction : Bool := true) (structLikeReduction : Bool := true) :
+    (whnf : Nat → Expr → m Expr) (trace : String → m Unit) (inferType : Expr → m Expr)
+    (inferType' : Expr → m Expr) (isDefEq : Expr → Expr → m Bool)
+    (kLikeReduction : Bool := true) (structLikeReduction : Bool := true)
+    (iotaReduction : NameSet) :
     m (Option (Expr × Bool × Bool)) := do
   let .const recFn ls := e.getAppFn | return none
+
+  -- Skip iota reduction for any registered recursor
+  if iotaReduction.contains recFn then
+    return none
+
   let some (.recInfo info) := env.find? recFn | return none
   let recArgs := e.getAppArgs
   let majorIdx := info.getMajorIdx

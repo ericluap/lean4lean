@@ -71,6 +71,7 @@ structure TypeCheckerOpts where
   proofIrrelevance := true
   kLikeReduction := true
   structLikeReduction := true
+  iotaReduction : NameSet := {}
 
 structure TypeChecker.Context where
   dbg : Nat := 0
@@ -139,7 +140,7 @@ structure Methods where
 
 abbrev RecM := ReaderT Methods M
 
-def callStackToStr : M String := do 
+def callStackToStr : M String := do
   let l := (← readThe Context).callStack.map fun d => s!"{d.1}/{d.2.1}"
   pure $ s!"{l}"
 
@@ -488,7 +489,11 @@ def reduceRecursor (e : Expr) (cheapRec cheapProj : Bool) : RecM (Option Expr) :
     if let some r ← quotReduceRec e (whnf 21) then
       return r
   let whnf' n e := if cheapRec then whnfCore (2000 + n) e cheapRec cheapProj else whnf (1000 + n) e
-  if let some (r, usedKLikeReduction, usedStructEta) ← inductiveReduceRec env e whnf' atrace (inferType 23) (inferType 23 (inferOnly := false)) (isDefEq 55) (← readThe Context).opts.kLikeReduction (← readThe Context).opts.structLikeReduction then
+  if let some (r, usedKLikeReduction, usedStructEta) ← inductiveReduceRec
+      env e whnf' atrace (inferType 23) (inferType 23 (inferOnly := false))
+      (isDefEq 55) (← readThe Context).opts.kLikeReduction
+      (← readThe Context).opts.structLikeReduction
+      (← readThe Context).opts.iotaReduction then
     if usedKLikeReduction then
       modify fun s => {s with data := {s.data with usedKLikeReduction := true}}
     if usedStructEta then
@@ -773,7 +778,7 @@ def isDefEqProofIrrel (t s : Expr) : RecM LBool := do
   let ret ← toLBoolM <| isDefEq 67 tType (← inferType 35 s)
   return ret
   -- pure .undef
-  
+
 def failedBefore (failure : Std.HashSet (Expr × Expr)) (t s : Expr) : Bool :=
   if t.hash < s.hash then
     failure.contains (t, s)
