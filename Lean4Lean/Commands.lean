@@ -107,9 +107,9 @@ def checkConstants (env : Lean.Environment) (consts : Lean.NameSet) (addDeclFn :
           IO.FS.createDirAll outDir
           let outPath := outDir.join outName
           if dbgOnly && (← System.FilePath.pathExists outPath) then
-            let (mod, region) ← readModuleData outPath
+            let (mod, _region) ← readModuleData outPath
             let module := modEnv.mainModule
-            let (_, s) ← importModulesCore mod.imports |>.run 
+            let (_, s) ← importModulesCore mod.imports |>.run
             modEnv ← finalizeImport s mod.imports {} 0 false false
             for const in mod.constants do
               modEnv := updateBaseAfterKernelAdd modEnv (modEnv.toKernelEnv.add const)
@@ -143,9 +143,9 @@ def checkConstants (env : Lean.Environment) (consts : Lean.NameSet) (addDeclFn :
       let errConsts := errConsts.insert const
       pure (modEnv, skipConsts, errConsts, onlyConstsToTrans)
 
-  for const in initConsts do 
+  for const in initConsts do
     (modEnv, skipConsts, errConsts, onlyConstsToTrans) ← loop const modEnv skipConsts errConsts onlyConstsToTrans false
-  for const in consts.toList do 
+  for const in consts.toList do
     (modEnv, skipConsts, errConsts, onlyConstsToTrans) ← loop const modEnv skipConsts errConsts onlyConstsToTrans printProgress
   pure (onlyConstsToTrans, modEnv)
 

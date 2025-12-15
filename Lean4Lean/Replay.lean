@@ -233,7 +233,7 @@ and add it to the environment.
 partial def replayConstant (name : Name) (addDeclFn' : Declaration → M Unit) (printProgress? : Bool := false) (op : String := "typecheck") : M Unit := do
   if (← get).aborted.contains name then
     return
-  let postAddDecl n := do
+  let postAddDecl _ := do
     modify fun s => {s with numChecked := s.numChecked + 1}
     if printProgress? then
       printProgress op
@@ -257,7 +257,7 @@ partial def replayConstant (name : Name) (addDeclFn' : Declaration → M Unit) (
               let newV := {v with name := ci.name}
               let newCi := ConstantInfo.defnInfo newV
               (newCi, Declaration.defnDecl newV)
-            | .thmInfo      v => 
+            | .thmInfo      v =>
               let newV := {v with name := ci.name}
               let newCi := ConstantInfo.thmInfo newV
               (newCi, Declaration.thmDecl newV)
@@ -281,7 +281,7 @@ partial def replayConstant (name : Name) (addDeclFn' : Declaration → M Unit) (
           { s with aborted := s.aborted.insert name }
         IO.println s!"\n{name} aborted due to aborted dependencies"
         return
-      
+
       addDeclFn' newDecl
     catch e =>
       match e with
@@ -421,7 +421,7 @@ def replay (ctx : Context) (_env : Kernel.Environment) (decl : Option Name := no
             if not ((← get).aborted.contains n) then
               replayConstant n addDeclFn printProgress op
           catch
-          | e => 
+          | e =>
             IO.eprintln s!"Error {op}ing constant `{n}`: {e.toString}"
             throw e
         for n in remaining do
@@ -519,6 +519,5 @@ end Lean4Lean
 
 register_option l4l.check : Bool := {
   defValue := false
-  group := "l4l"
   descr := "run secondary Lean4Lean typechecker on definintions"
 }
