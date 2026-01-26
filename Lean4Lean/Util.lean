@@ -1,13 +1,6 @@
 import Lean
 open Lean
 
-def ppExpr (env : Environment) (e : Expr) : IO String := do
-  let options := default
-  let options := KVMap.set options `pp.proofs true
-  let options := KVMap.set options `pp.explicit true
-  let options := KVMap.set options `pp.funBinderTypes true
-  pure s!"{← PrettyPrinter.ppExprLegacy env default default options e}"
-
 -- TODO existing function for this?
 partial def Lean.Name.isCStage : Name → Bool
 | .str p s   => s.startsWith "_cstage" || p.isCStage
@@ -35,7 +28,7 @@ namespace Deps
     for name in names do
       match ((← get).map.get? name) with
       | .none =>
-        let some const ← 
+        let some const ←
           if let some ci := (← read).overrides[name]? then
             let newCi := match ci with
             | .axiomInfo    v =>
@@ -44,7 +37,7 @@ namespace Deps
             | .defnInfo     v =>
               let newV := {v with name}
               ConstantInfo.defnInfo newV
-            | .thmInfo      v => 
+            | .thmInfo      v =>
               let newV := {v with name}
               ConstantInfo.thmInfo newV
             | .opaqueInfo   v =>
